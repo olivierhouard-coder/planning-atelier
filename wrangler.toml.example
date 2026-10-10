@@ -1,0 +1,12 @@
+name = "planning-atelier"
+compatibility_date = "2026-10-10"
+pages_build_output_dir = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "planning-atelier-db"
+database_id = "REMPLACER_PAR_L_ID_D1"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "planning-atelier-photos"

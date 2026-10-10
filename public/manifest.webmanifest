@@ -1,0 +1,8 @@
+{
+  "name": "Planning Atelier",
+  "short_name": "Planning",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#172033"
+}
