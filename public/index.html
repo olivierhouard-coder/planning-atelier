@@ -18,7 +18,7 @@
         <p class="subtitle">Planning partagé — Olivier & Christophe</p>
       </div>
     </div>
-    <button id="newSlot">＋ Nouveau rendez-vous</button>
+    <div class="header-actions"><button id="enableNotifications" type="button">🔔 Activer les notifications</button><button id="newSlot">＋ Nouveau rendez-vous</button></div>
   </header>
   <main>
     <div class="toolbar">
@@ -28,6 +28,7 @@
       <button id="today">Aujourd’hui</button>
     </div>
     <p id="status" role="status">Connexion au planning…</p>
+    <p id="pushStatus" class="push-status" role="status">Notifications non configurées.</p>
     <section id="calendar" class="calendar" aria-label="Calendrier mensuel"></section>
     <section class="legend"><span class="dot"></span> Véhicule présent à l’atelier</section>
   </main>
