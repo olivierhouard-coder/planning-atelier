@@ -4,11 +4,17 @@ const dialog = $('slotDialog');
 const form = $('slotForm');
 let viewDate = new Date();
 let slots = [];
+let reminders = [];
 
 const monthFmt = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const parseDate = (s) => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
 const safe = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toLocalInput = (value) => {
+  if (!value) return '';
+  const d = new Date(value);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+};
 
 async function api(path, options={}) {
   const res = await fetch(path, { headers: {'Content-Type':'application/json', ...(options.headers||{})}, ...options });
@@ -18,8 +24,11 @@ async function api(path, options={}) {
 async function loadSlots() {
   $('status').textContent = 'Chargement des rendez-vous…';
   try {
-    slots = await api('/api/slots');
-    $('status').textContent = `${slots.length} rendez-vous enregistré(s).`;
+    const results = await Promise.allSettled([api('/api/slots'),api('/api/reminders')]);
+    if (results[0].status !== 'fulfilled') throw results[0].reason;
+    slots = results[0].value;
+    reminders = results[1].status === 'fulfilled' ? results[1].value : [];
+    $('status').textContent = `${slots.length} rendez-vous enregistré(s).` + (results[1].status === 'fulfilled' ? '' : ' Les rappels ne sont pas disponibles pour le moment.');
     render();
   } catch (e) {
     $('status').textContent = 'La base D1 n’est pas encore reliée. Termine la configuration Cloudflare avant utilisation.';
@@ -42,10 +51,11 @@ function render() {
     cell.innerHTML = `<div class="daynum">${d.getDate()}</div>`;
     const day = iso(d);
     slots.filter(s => s.entry_date <= day && (!s.return_date || s.return_date >= day)).forEach(s => {
+      const reminder = reminders.find(r => r.slot_id === s.id && !r.completed_at);
       const ev = document.createElement('button');
       ev.type='button'; ev.className='event';
-      ev.innerHTML = `<strong>${safe(s.vehicle_info || 'Véhicule / client')}</strong><span class="long">${safe(s.notes || '')}</span>`;
-      ev.title = `${s.entry_date}${s.return_date ? ' → '+s.return_date : ''}`;
+      ev.innerHTML = `<strong>${safe(s.vehicle_info || 'Véhicule / client')}${reminder ? ' 🔔' : ''}</strong><span class="long">${safe(s.notes || '')}</span>`;
+      ev.title = `${s.entry_date}${s.return_date ? ' → '+s.return_date : ''}${reminder ? ' — rappel programmé' : ''}`;
       ev.addEventListener('click', () => openEdit(s));
       cell.append(ev);
     });
@@ -54,13 +64,20 @@ function render() {
   }
 }
 function openNew(day=iso(new Date())) {
-  form.reset(); $('slotId').value=''; $('entryDate').value=day; $('returnDate').value='';
+  form.reset(); $('slotId').value=''; $('reminderId').value=''; $('entryDate').value=day; $('returnDate').value='';
   $('formTitle').textContent='Nouveau rendez-vous'; $('deleteSlot').classList.add('hidden');
+  $('partsNeeded').value='no'; $('reminderAt').value=''; $('reminderMessage').value=''; $('reminderCompleted').checked=false;
   dialog.showModal();
 }
 function openEdit(s) {
+  const r = reminders.find(item => item.slot_id === s.id);
   $('slotId').value=s.id; $('entryDate').value=s.entry_date; $('returnDate').value=s.return_date || '';
   $('vehicleInfo').value=s.vehicle_info || ''; $('notes').value=s.notes || '';
+  $('reminderId').value=r?.id || '';
+  $('partsNeeded').value=r ? 'yes' : 'no';
+  $('reminderAt').value=toLocalInput(r?.remind_at);
+  $('reminderMessage').value=r?.message || '';
+  $('reminderCompleted').checked=Boolean(r?.completed_at);
   $('formTitle').textContent='Modifier le rendez-vous'; $('deleteSlot').classList.remove('hidden');
   dialog.showModal();
 }
@@ -70,8 +87,18 @@ form.addEventListener('submit', async e => {
   const payload={id, entry_date:$('entryDate').value, return_date:$('returnDate').value || null,
     vehicle_info:$('vehicleInfo').value.trim() || null, notes:$('notes').value.trim() || null};
   if(!payload.entry_date){alert('La date d’entrée est obligatoire.');return;}
+  const reminderAt=$('reminderAt').value;
+  if ($('partsNeeded').value === 'yes' && !reminderAt) { alert('Choisis une date et une heure pour le rappel des pièces.'); return; }
   try {
     await api('/api/slots', {method:'POST', body:JSON.stringify(payload)});
+    const reminderId=$('reminderId').value;
+    if ($('partsNeeded').value === 'yes' && reminderAt) {
+      const reminder={id:reminderId || crypto.randomUUID(),slot_id:id,remind_at:new Date(reminderAt).toISOString(),
+        message:$('reminderMessage').value.trim() || 'Penser aux pièces à commander',completed:$('reminderCompleted').checked};
+      await api('/api/reminders',{method:'POST',body:JSON.stringify(reminder)});
+    } else if (reminderId) {
+      await api('/api/reminders?id='+encodeURIComponent(reminderId),{method:'DELETE'});
+    }
     dialog.close(); await loadSlots();
   } catch(err) { alert('Enregistrement impossible : '+err.message); }
 });
