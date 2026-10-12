@@ -39,6 +39,7 @@
         <button type="button" class="icon-button" id="closeDialog" aria-label="Fermer">×</button>
       </div>
       <input type="hidden" id="slotId">
+      <input type="hidden" id="reminderId">
       <label>Date d’entrée <span class="required">(obligatoire)</span>
         <input id="entryDate" type="date" required>
       </label>
@@ -51,7 +52,23 @@
       <label>Notes <span class="optional">(facultatif)</span>
         <textarea id="notes" rows="3" placeholder="Informations complémentaires"></textarea>
       </label>
-      <p class="hint">Les champs facultatifs peuvent rester vides. Les rappels et photos seront ajoutés dans les étapes suivantes.</p>
+      <div class="reminder-panel">
+        <h3>Commande de pièces et rappel</h3>
+        <label>Pièces à commander ?
+          <select id="partsNeeded">
+            <option value="no">Non</option>
+            <option value="yes">Oui</option>
+          </select>
+        </label>
+        <label>Date et heure du rappel
+          <input id="reminderAt" type="datetime-local">
+        </label>
+        <label>Message du rappel
+          <input id="reminderMessage" type="text" placeholder="Ex. Commander pare-chocs et phare">
+        </label>
+        <label class="check-label"><input id="reminderCompleted" type="checkbox"> Pièces commandées / rappel terminé</label>
+        <p class="hint">Le rappel sera enregistré avec ce dossier. Les notifications même application fermée nécessitent encore l’activation du service push.</p>
+      </div>
       <div class="actions">
         <button type="button" id="deleteSlot" class="danger hidden">Supprimer</button>
         <span class="grow"></span>
