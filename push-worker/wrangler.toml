@@ -1,0 +1,9 @@
+name = "planning-atelier-push"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[triggers]
+crons = ["* * * * *"]
+
+# À configurer dans Cloudflare : liaison D1 "DB" vers planning-atelier-db.
+# Ajouter VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY et VAPID_SUBJECT dans les variables/secrets du Worker.
