@@ -11,3 +11,6 @@ dialog{border:0;border-radius:16px;width:min(560px,calc(100% - 24px));padding:0;
 @media(max-width:650px){header{align-items:flex-start;flex-direction:column;padding-top:20px;padding-bottom:20px}.brand{gap:12px}.brand-logo{width:64px;height:64px}header button{width:100%}.day{min-height:84px;padding:5px 3px}.weekday{font-size:.68rem;padding:9px 1px}.event{font-size:.65rem;padding:4px 3px;border-left-width:2px}.event .long{display:none}.toolbar{gap:6px}.toolbar button{padding:9px 11px}.toolbar h2{font-size:1rem}}
 
 .reminder-panel{display:grid;gap:12px;padding:14px;background:#f5f7fb;border:1px solid #e1e7f0;border-radius:12px}.reminder-panel h3{margin:0;font-size:1rem}.check-label{display:flex;align-items:center;gap:9px}.check-label input{width:auto;flex:0 0 auto}.reminder-panel .hint{padding:0;background:transparent}
+
+.header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.header-actions #enableNotifications{background:#46546c}.push-status{font-size:.88rem;color:#59657a;background:rgba(255,255,255,.78);padding:8px 11px;border-radius:8px;overflow-wrap:anywhere}
+@media(max-width:650px){.header-actions{width:100%;display:grid;grid-template-columns:1fr}.header-actions button{width:100%}}
