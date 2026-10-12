@@ -114,3 +114,49 @@ $('prevMonth').addEventListener('click',()=>{viewDate.setMonth(viewDate.getMonth
 $('nextMonth').addEventListener('click',()=>{viewDate.setMonth(viewDate.getMonth()+1);render();});
 $('today').addEventListener('click',()=>{viewDate=new Date();render();});
 loadSlots();
+
+function base64UrlToBytes(value) {
+  const padded=value + '='.repeat((4-value.length%4)%4);
+  const base64=padded.replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64);
+  return Uint8Array.from(raw,c=>c.charCodeAt(0));
+}
+async function enablePushNotifications() {
+  const status=$('pushStatus');
+  const button=$('enableNotifications');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    status.textContent='Ce navigateur ne prend pas en charge les notifications push. Sur iPhone, ouvre Planning Atelier depuis son icône sur l’écran d’accueil.';
+    return;
+  }
+  button.disabled=true;
+  status.textContent='Activation des notifications…';
+  try {
+    const permission=await Notification.requestPermission();
+    if (permission!=='granted') throw new Error('Autorisation refusée. Autorise les notifications dans les réglages du navigateur.');
+    const config=await api('/api/push-config');
+    if (!config.enabled || !config.publicKey) throw new Error('Le service push doit encore être configuré côté Cloudflare.');
+    const registration=await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    let subscription=await registration.pushManager.getSubscription();
+    if (!subscription) subscription=await registration.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:base64UrlToBytes(config.publicKey)
+    });
+    await api('/api/push-subscriptions',{method:'POST',body:JSON.stringify({
+      subscription:subscription.toJSON(),
+      device_name:/iPhone|iPad|iPod/.test(navigator.userAgent)?'iPhone/iPad':/Android/.test(navigator.userAgent)?'Android':'Navigateur ordinateur'
+    })});
+    status.textContent='Notifications autorisées sur cet appareil. Le service d’envoi automatique doit encore être activé côté Cloudflare.';
+    button.textContent='✓ Notifications autorisées';
+  } catch(err) {
+    status.textContent='Activation incomplète : '+err.message;
+    button.disabled=false;
+  }
+}
+$('enableNotifications').addEventListener('click',enablePushNotifications);
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=> {
+    const status=$('pushStatus');
+    if(status) status.textContent='Le service de notifications ne peut pas encore être enregistré sur ce navigateur.';
+  });
+}
