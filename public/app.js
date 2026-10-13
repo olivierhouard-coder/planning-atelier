@@ -6,7 +6,8 @@ let viewDate = new Date();
 let slots = [];
 let reminders = [];
 
-const monthFmt = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+const weekFmt = new Intl.DateTimeFormat('fr-FR', {day:'numeric',month:'long'});
+const weekStart = (date) => {const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());d.setDate(d.getDate()-(d.getDay()+6)%7);return d;};
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const parseDate = (s) => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
 const safe = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -31,35 +32,39 @@ async function loadSlots() {
     $('status').textContent = `${slots.length} rendez-vous enregistré(s).` + (results[1].status === 'fulfilled' ? '' : ' Les rappels ne sont pas disponibles pour le moment.');
     render();
   } catch (e) {
-    $('status').textContent = 'La base D1 n’est pas encore reliée. Termine la configuration Cloudflare avant utilisation.';
+    $('status').textContent = 'Impossible de charger les rendez-vous : '+e.message;
     render();
   }
 }
 function render() {
-  calendar.innerHTML = '';
-  $('monthLabel').textContent = monthFmt.format(viewDate);
-  ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].forEach(w => {
-    const el = document.createElement('div'); el.className='weekday'; el.textContent=w; calendar.append(el);
-  });
-  const first = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-  const start = new Date(first); start.setDate(first.getDate() - ((first.getDay()+6)%7));
-  const today = iso(new Date());
-  for(let i=0;i<42;i++){
-    const d = new Date(start); d.setDate(start.getDate()+i);
-    const cell = document.createElement('div');
-    cell.className='day'+(d.getMonth()!==viewDate.getMonth()?' other':'')+(iso(d)===today?' today':'');
-    cell.innerHTML = `<div class="daynum">${d.getDate()}</div>`;
-    const day = iso(d);
-    slots.filter(s => s.entry_date <= day && (!s.return_date || s.return_date >= day)).forEach(s => {
-      const reminder = reminders.find(r => r.slot_id === s.id && !r.completed_at);
-      const ev = document.createElement('button');
-      ev.type='button'; ev.className='event';
-      ev.innerHTML = `<strong>${safe(s.vehicle_info || 'Véhicule / client')}${reminder ? ' 🔔' : ''}</strong><span class="long">${safe(s.notes || '')}</span>`;
-      ev.title = `${s.entry_date}${s.return_date ? ' → '+s.return_date : ''}${reminder ? ' — rappel programmé' : ''}`;
-      ev.addEventListener('click', () => openEdit(s));
-      cell.append(ev);
-    });
-    cell.addEventListener('dblclick', () => openNew(day));
+  calendar.innerHTML='';
+  const start=weekStart(viewDate);
+  const end=new Date(start);end.setDate(start.getDate()+4);
+  $('monthLabel').textContent=`Semaine du ${weekFmt.format(start)} au ${weekFmt.format(end)} ${end.getFullYear()}`;
+  const today=iso(new Date());
+  const active=slots.filter(s=>s.entry_date<=iso(end) && (s.return_date||s.entry_date)>=iso(start));
+  $('weekCount').textContent=`${active.length} rendez-vous cette semaine`;
+  for(let i=0;i<5;i++) {
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const day=iso(d);
+    const cell=document.createElement('section');
+    cell.className='week-day'+(day===today?' today':'');
+    const head=document.createElement('div');head.className='week-day-head';
+    const label=document.createElement('h3');label.textContent=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'][i]+' '+d.getDate();
+    const add=document.createElement('button');add.type='button';add.className='day-add';add.textContent='+ RDV';
+    add.setAttribute('aria-label','Ajouter un rendez-vous le '+day);add.addEventListener('click',()=>openNew(day));
+    head.append(label,add);cell.append(head);
+    const daily=active.filter(s=>s.entry_date<=day && (s.return_date||s.entry_date)>=day);
+    if(!daily.length){const empty=document.createElement('p');empty.className='empty-day';empty.textContent='Aucun rendez-vous';cell.append(empty);}
+    for(const s of daily){
+      const reminder=reminders.find(r=>r.slot_id===s.id && !r.completed_at);
+      const ev=document.createElement('button');ev.type='button';ev.className='week-event';
+      const name=document.createElement('strong');name.textContent=s.vehicle_info||'Véhicule / client';
+      const note=document.createElement('span');note.textContent=s.notes||'Cliquer pour consulter ou modifier';
+      ev.append(name,note);
+      if(reminder){const bell=document.createElement('small');bell.textContent='🔔 Rappel pièces';ev.append(bell);}
+      ev.addEventListener('click',()=>openEdit(s));cell.append(ev);
+    }
     calendar.append(cell);
   }
 }
@@ -83,14 +88,15 @@ function openEdit(s) {
 }
 form.addEventListener('submit', async e => {
   e.preventDefault();
-  const id=$('slotId').value || crypto.randomUUID();
-  const payload={id, entry_date:$('entryDate').value, return_date:$('returnDate').value || null,
+  const existingId=$('slotId').value;
+  const payload={...(existingId?{id:existingId}:{}), entry_date:$('entryDate').value, return_date:$('returnDate').value || null,
     vehicle_info:$('vehicleInfo').value.trim() || null, notes:$('notes').value.trim() || null};
   if(!payload.entry_date){alert('La date d’entrée est obligatoire.');return;}
   const reminderAt=$('reminderAt').value;
   if ($('partsNeeded').value === 'yes' && !reminderAt) { alert('Choisis une date et une heure pour le rappel des pièces.'); return; }
   try {
-    await api('/api/slots', {method:'POST', body:JSON.stringify(payload)});
+    const saved=await api('/api/slots', {method:existingId?'PUT':'POST', body:JSON.stringify(payload)});
+    const id=saved.id;
     const reminderId=$('reminderId').value;
     if ($('partsNeeded').value === 'yes' && reminderAt) {
       const reminder={id:reminderId || crypto.randomUUID(),slot_id:id,remind_at:new Date(reminderAt).toISOString(),
@@ -110,8 +116,8 @@ $('deleteSlot').addEventListener('click', async () => {
 $('newSlot').addEventListener('click',()=>openNew());
 $('closeDialog').addEventListener('click',()=>dialog.close());
 $('cancel').addEventListener('click',()=>dialog.close());
-$('prevMonth').addEventListener('click',()=>{viewDate.setMonth(viewDate.getMonth()-1);render();});
-$('nextMonth').addEventListener('click',()=>{viewDate.setMonth(viewDate.getMonth()+1);render();});
+$('prevMonth').addEventListener('click',()=>{viewDate.setDate(viewDate.getDate()-7);render();});
+$('nextMonth').addEventListener('click',()=>{viewDate.setDate(viewDate.getDate()+7);render();});
 $('today').addEventListener('click',()=>{viewDate=new Date();render();});
 loadSlots();
 
