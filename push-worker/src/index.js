@@ -60,9 +60,15 @@ async function deliverDueReminders(env) {
 }
 
 export default {
-  async scheduled(_event, env, ctx) {
-    ctx.waitUntil(deliverDueReminders(env));
-  },
+ async scheduled(event, env, ctx) {
+  console.log('CRON DÉCLENCHÉ', new Date().toISOString());
+
+  ctx.waitUntil(
+    deliverDueReminders(env)
+      .then(result => console.log('RÉSULTAT RAPPELS', JSON.stringify(result)))
+      .catch(error => console.error('ERREUR RAPPELS', error))
+  );
+},
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/health') return json({ ok: true, worker: 'planning-atelier-push' });
