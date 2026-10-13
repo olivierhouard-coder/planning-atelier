@@ -61,7 +61,7 @@ function render() {
       const ev=document.createElement('button');ev.type='button';ev.className='week-event';
       const name=document.createElement('strong');name.textContent=s.vehicle_info||'Véhicule / client';
       const note=document.createElement('span');note.textContent=s.notes||'Cliquer pour consulter ou modifier';
-      ev.append(name,note);
+      name.style.display = 'block'; note.style.display = 'block'; note.style.marginTop = '8px'; note.style.whiteSpace = 'pre-wrap'; note.style.overflowWrap = 'anywhere'; ev.append(name,note);
       if(reminder){const bell=document.createElement('small');bell.textContent='🔔 Rappel pièces';ev.append(bell);}
       ev.addEventListener('click',()=>openEdit(s));cell.append(ev);
     }
