@@ -4,5 +4,13 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f4f6fa",
-  "theme_color": "#172033"
+  "theme_color": "#172033",
+  "icons": [
+    {
+      "src": "/logo-planning-atelier.png.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
