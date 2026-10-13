@@ -160,3 +160,26 @@ if ('serviceWorker' in navigator) {
     if(status) status.textContent='Le service de notifications ne peut pas encore être enregistré sur ce navigateur.';
   });
 }
+async function verifierNotifications() {
+  const bouton = document.getElementById('enableNotifications');
+  const statut = document.getElementById('pushStatus');
+
+  if (!bouton || !statut || !('Notification' in window) ||
+      !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  if (Notification.permission !== 'granted') return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const abonnement = await registration.pushManager.getSubscription();
+
+    if (abonnement) {
+      bouton.textContent = '✓ Notifications autorisées';
+      statut.textContent = 'Notifications déjà activées sur cet appareil.';
+    }
+  } catch (erreur) {
+    console.error('Vérification des notifications :', erreur);
+  }
+}
+
+verifierNotifications();
