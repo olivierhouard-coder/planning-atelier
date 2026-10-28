@@ -17,7 +17,7 @@ async function vehicle(db,id){return db.prepare('SELECT id,name,active FROM repl
 function dbError(e){const msg=String(e?.message||e);if(/UNIQUE constraint failed: replacement_occupancy|replacement_occupancy.vehicle_id/i.test(msg))return json({error:'Ce véhicule de remplacement est déjà réservé sur une ou plusieurs dates. Actualise le planning et choisis un autre VR.'},409);return json({error:msg},500);}
 export async function onRequestGet({env}){
  if(!env.DB)return json({error:'Binding D1 DB manquant'},503);
- try {const {results=[]}=await env.DB.prepare(`SELECT s.id,s.entry_date,s.return_date,s.vehicle_info,s.notes,s.created_at,s.updated_at,r.vehicle_id AS replacement_vehicle_id,v.name AS replacement_vehicle_name FROM slots s LEFT JOIN replacement_reservations r ON r.slot_id=s.id LEFT JOIN replacement_vehicles v ON v.id=r.vehicle_id ORDER BY s.entry_date,s.created_at`).all();return json(results);}catch(e){return dbError(e);}
+ try {const {results=[]}=await env.DB.prepare(`SELECT s.id,s.entry_date,s.return_date,s.vehicle_info,s.notes,s.created_at,s.updated_at,s.actual_return_date,s.returned_at,r.vehicle_id AS replacement_vehicle_id,v.name AS replacement_vehicle_name FROM slots s LEFT JOIN replacement_reservations r ON r.slot_id=s.id LEFT JOIN replacement_vehicles v ON v.id=r.vehicle_id ORDER BY s.entry_date,s.created_at`).all();return json(results);}catch(e){return dbError(e);}
 }
 export async function onRequestPost({request,env}){
  if(!env.DB)return json({error:'Binding D1 DB manquant'},503);
@@ -39,15 +39,16 @@ export async function onRequestPut({request,env}){
  if(!b?.id||typeof b.id!=='string')return json({error:'Identifiant du rendez-vous manquant'},400);
  const err=validate(b);if(err)return json({error:err},400);
  try{
-  const current=await env.DB.prepare('SELECT s.id,r.vehicle_id FROM slots s LEFT JOIN replacement_reservations r ON r.slot_id=s.id WHERE s.id=?').bind(b.id).first();
+  const current=await env.DB.prepare('SELECT s.id,s.entry_date,s.return_date,s.returned_at,r.vehicle_id FROM slots s LEFT JOIN replacement_reservations r ON r.slot_id=s.id WHERE s.id=?').bind(b.id).first();
   if(!current)return json({error:'Rendez-vous introuvable'},404);
   const vr=hasVR(b)?(b.replacement_vehicle_id==null||b.replacement_vehicle_id===''?null:Number(b.replacement_vehicle_id)):current.vehicle_id;
+  if(current.returned_at && (vr!==current.vehicle_id || b.entry_date!==current.entry_date || (b.return_date||null)!==current.return_date))return json({error:'Prêt déjà restitué : ses dates et son VR sont verrouillés. Contacte le responsable pour toute correction.'},409);
   if(vr!==null&&(!Number.isSafeInteger(vr)||vr<1))return json({error:'VR invalide'},400);
   if(vr!==null&&!b.return_date)return json({error:'Renseigne la date de restitution pour réserver un VR.'},400);
   if(vr!==null){const v=await vehicle(env.DB,vr);if(!v||(!v.active&&vr!==current.vehicle_id))return json({error:'VR inexistant ou désactivé'},400);}
-  const statements=[env.DB.prepare('DELETE FROM replacement_occupancy WHERE slot_id=?').bind(b.id),env.DB.prepare("UPDATE slots SET entry_date=?,return_date=?,vehicle_info=?,notes=?,updated_at=datetime('now') WHERE id=?").bind(b.entry_date,b.return_date||null,b.vehicle_info||null,b.notes||null,b.id)];
+  const statements=[...(current.returned_at?[]:[env.DB.prepare('DELETE FROM replacement_occupancy WHERE slot_id=?').bind(b.id)]),env.DB.prepare("UPDATE slots SET entry_date=?,return_date=?,vehicle_info=?,notes=?,updated_at=datetime('now') WHERE id=?").bind(b.entry_date,b.return_date||null,b.vehicle_info||null,b.notes||null,b.id)];
   if(vr===null)statements.push(env.DB.prepare('DELETE FROM replacement_reservations WHERE slot_id=?').bind(b.id));
-  else {statements.push(env.DB.prepare('INSERT INTO replacement_reservations(vehicle_id,slot_id) VALUES(?,?) ON CONFLICT(slot_id) DO UPDATE SET vehicle_id=excluded.vehicle_id').bind(vr,b.id));for(const day of dates(b.entry_date,b.return_date))statements.push(env.DB.prepare('INSERT INTO replacement_occupancy(vehicle_id,day,slot_id) VALUES(?,?,?)').bind(vr,day,b.id));}
+  else if(!current.returned_at) {statements.push(env.DB.prepare('INSERT INTO replacement_reservations(vehicle_id,slot_id) VALUES(?,?) ON CONFLICT(slot_id) DO UPDATE SET vehicle_id=excluded.vehicle_id').bind(vr,b.id));for(const day of dates(b.entry_date,b.return_date))statements.push(env.DB.prepare('INSERT INTO replacement_occupancy(vehicle_id,day,slot_id) VALUES(?,?,?)').bind(vr,day,b.id));}
   await env.DB.batch(statements);return json({ok:true,id:b.id});
  }catch(e){return dbError(e);}
 }
