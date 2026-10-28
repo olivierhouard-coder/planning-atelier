@@ -18,7 +18,7 @@
         <p class="subtitle">Planning partagé — Olivier & Christophe</p>
       </div>
     </div>
-    <div class="header-actions"><button id="enableNotifications" type="button">🔔 Activer les notifications</button><button id="newSlot">＋ Nouveau rendez-vous</button></div>
+    <div class="header-actions"><button id="enableNotifications" type="button">🔔 Activer les notifications</button><button id="manageFleet" type="button">🚗 Gérer les VR</button><button id="newSlot">＋ Nouveau rendez-vous</button></div>
   </header>
   <main>
     <div class="toolbar">
@@ -30,6 +30,12 @@
     <p id="weekCount" class="week-count" aria-live="polite"></p>
     <p id="status" role="status">Connexion au planning…</p>
     <p id="pushStatus" class="push-status" role="status">Notifications non configurées.</p>
+    <section class="vr-dashboard" aria-label="Disponibilité des véhicules de remplacement">
+      <div class="vr-dashboard-head"><h2>🚗 Disponibilité des VR</h2><label>Voir au <input type="date" id="vrCheckDate"></label></div>
+      <div id="vrSummary" class="vr-summary" aria-live="polite"></div>
+      <div id="vrAvailability" class="vr-availability"></div>
+      <p class="vr-disclaimer">Les retours sont prévisionnels tant que « VR réellement restitué » n’a pas été confirmé. Le jour du retour reste bloqué. Une restitution tardive doit être vérifiée avant tout nouveau prêt.</p>
+    </section>
     <section id="calendar" class="calendar week-calendar" aria-label="Planning hebdomadaire"></section>
     <section class="legend">Vue semaine · Touchez un rendez-vous pour le modifier, ou « + RDV » pour en ajouter un.</section>
   </main>
@@ -55,6 +61,13 @@
         <textarea id="notes" rows="3" placeholder="Informations complémentaires"></textarea>
       </label>
       <div class="reminder-panel">
+        <h3>🚗 Véhicule de remplacement</h3>
+        <label>Réserver un VR
+          <select id="replacementVehicle"><option value="">Aucun véhicule de remplacement</option></select>
+        </label>
+        <p class="hint">Départ du VR = entrée du client. Retour du VR = restitution du client. Les deux journées sont réservées. Une date de restitution est obligatoire pour réserver un VR.</p>
+      </div>
+      <div class="reminder-panel">
         <h3>Commande de pièces et rappel</h3>
         <label>Pièces à commander ?
           <select id="partsNeeded">
@@ -78,6 +91,13 @@
         <button type="submit">Enregistrer</button>
       </div>
     </form>
+  </dialog>
+  <dialog id="fleetDialog">
+    <div class="fleet-modal">
+      <div class="dialog-head"><h2>🚗 Véhicules de remplacement</h2><button id="closeFleet" type="button" class="icon-button" aria-label="Fermer">×</button></div>
+      <p class="hint">Modifie les noms ou désactive un VR. Les réservations déjà enregistrées sont conservées.</p>
+      <div id="fleetList"></div>
+    </div>
   </dialog>
   <script src="/app.js" defer></script>
 </body>
