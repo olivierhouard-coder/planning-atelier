@@ -30,6 +30,12 @@
     <p id="weekCount" class="week-count" aria-live="polite"></p>
     <p id="status" role="status">Connexion au planning…</p>
     <p id="pushStatus" class="push-status" role="status">Notifications non configurées.</p>
+    <section class="vr-dashboard" aria-label="Disponibilité des véhicules de remplacement">
+      <div class="vr-dashboard-head"><h2>🚗 Disponibilité des VR</h2><label>Voir au <input type="date" id="vrCheckDate"></label></div>
+      <div id="vrSummary" class="vr-summary" aria-live="polite"></div>
+      <div id="vrAvailability" class="vr-availability"></div>
+      <p class="vr-disclaimer">Disponibilités prévisionnelles selon les dates des rendez-vous, pas une confirmation de restitution physique. Le jour de retour reste réservé.</p>
+    </section>
     <section id="calendar" class="calendar week-calendar" aria-label="Planning hebdomadaire"></section>
     <section class="legend">Vue semaine · Touchez un rendez-vous pour le modifier, ou « + RDV » pour en ajouter un.</section>
   </main>

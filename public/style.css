@@ -17,3 +17,10 @@ dialog{border:0;border-radius:16px;width:min(560px,calc(100% - 24px));padding:0;
 
 /* Véhicules de remplacement */
 .fleet-modal{padding:22px;display:grid;gap:15px}.fleet-row{display:grid;grid-template-columns:minmax(0,1fr) 24px auto;gap:9px;align-items:center;margin:10px 0}.fleet-row input[type=checkbox]{width:18px;height:18px}.fleet-row button{padding:10px}.secondary-button{background:#46546c}.week-event small{display:block;margin-top:6px;font-size:.77rem}select{font:inherit;padding:11px 12px;border:1px solid #d4dbe7;border-radius:9px;background:white;width:100%;color:#172033}
+
+/* Tableau de bord VR — prévisionnel */
+.vr-dashboard{background:rgba(255,255,255,.96);border:1px solid #dfe4ed;border-radius:14px;padding:18px;margin:18px 0;box-shadow:0 5px 20px #16233a0a}
+.vr-dashboard-head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.vr-dashboard-head h2{margin:0;font-size:1.12rem}.vr-dashboard-head label{display:flex;align-items:center;gap:9px}.vr-dashboard-head input{width:auto}
+.vr-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}.vr-stat{background:#f3f6fb;border-radius:10px;padding:12px;display:grid;gap:3px;text-align:center}.vr-stat strong{font-size:1.8rem}.vr-stat span{font-size:.8rem;color:#59657a}
+.vr-availability-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e8ecf3;padding:12px 2px;flex-wrap:wrap}.vr-detail{display:grid;gap:3px;margin-left:auto;text-align:right;font-size:.88rem}.vr-free{color:#167342;font-weight:700}.vr-busy{color:#a65312;font-weight:700}.vr-availability-row button{padding:7px 10px;font-size:.8rem}.vr-disclaimer{font-size:.78rem;color:#657087;margin:12px 0 0}
+@media(max-width:650px){.vr-summary{gap:5px}.vr-stat{padding:9px 4px}.vr-stat strong{font-size:1.4rem}.vr-stat span{font-size:.69rem}.vr-detail{text-align:left;margin-left:0;width:100%}}

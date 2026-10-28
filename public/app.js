@@ -31,7 +31,7 @@ async function loadSlots() {
     slots = results[0].value;
     reminders = results[1].status === 'fulfilled' ? results[1].value : [];
     replacementVehicles = results[2].status === 'fulfilled' ? results[2].value : [];
-    refreshVehicleOptions(); renderFleet();
+    refreshVehicleOptions(); renderFleet(); renderVRDashboard();
     $('status').textContent = `${slots.length} rendez-vous enregistré(s).` + (results[1].status === 'fulfilled' ? '' : ' Les rappels ne sont pas disponibles pour le moment.');
     render();
   } catch (e) {
@@ -127,6 +127,37 @@ function refreshVehicleOptions(){
  for(const v of replacementVehicles){if(v.active||String(v.id)===chosen)select.add(new Option(v.name+(v.active?'':' (désactivé)'),String(v.id)));}
  select.value=chosen;
 }
+function renderVRDashboard(){
+ const summary=$('vrSummary'),list=$('vrAvailability');if(!summary||!list)return;
+ const date=$('vrCheckDate').value||iso(new Date());
+ const activeVehicles=replacementVehicles.filter(v=>v.active);
+ const occupied=(v,day)=>slots.find(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&s.entry_date<=day&&s.return_date>=day);
+ const free=activeVehicles.filter(v=>!occupied(v,date)).length;
+ const tomorrow=iso(new Date(parseDate(date).getTime()+86400000));
+ const inTwo=iso(new Date(parseDate(date).getTime()+2*86400000));
+ const returnsSoon=activeVehicles.filter(v=>slots.some(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&s.return_date>=date&&s.return_date<=inTwo)).length;
+ summary.replaceChildren();
+ for(const [n,label] of [[free,'Disponibles'],[activeVehicles.length-free,'Réservés'],[returnsSoon,'Retours prévus sous 48 h']]){
+  const tile=document.createElement('div');tile.className='vr-stat';
+  const value=document.createElement('strong');value.textContent=String(n);
+  const desc=document.createElement('span');desc.textContent=label;tile.append(value,desc);summary.append(tile);
+ }
+ list.replaceChildren();
+ for(const v of activeVehicles){
+  const current=occupied(v,date);
+  const next=slots.filter(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&s.entry_date>date).sort((a,b)=>a.entry_date.localeCompare(b.entry_date))[0];
+  const line=document.createElement('div');line.className='vr-availability-row';
+  const name=document.createElement('strong');name.textContent='🚗 '+v.name;
+  const detail=document.createElement('div');detail.className='vr-detail';
+  const state=document.createElement('span');state.className=current?'vr-busy':'vr-free';state.textContent=current?'Réservé jusqu’au '+current.return_date:'Disponible le '+date;
+  detail.append(state);
+  if(current){const who=document.createElement('span');who.textContent=current.vehicle_info||'Client non renseigné';detail.append(who);}
+  else if(next){const upcoming=document.createElement('span');upcoming.textContent='Prochain départ : '+next.entry_date+(next.vehicle_info?' · '+next.vehicle_info:'');detail.append(upcoming);}
+  line.append(name,detail);if(current){const open=document.createElement('button');open.type='button';open.textContent='Voir RDV';open.className='secondary-button';open.addEventListener('click',()=>openEdit(current));line.append(open);}
+  list.append(line);
+ }
+ if(!activeVehicles.length){list.textContent='Aucun véhicule de remplacement actif.';}
+}
 function renderFleet(){
  const el=$('fleetList');if(!el)return;el.replaceChildren();
  for(const v of replacementVehicles){
@@ -146,6 +177,9 @@ $('closeDialog').addEventListener('click',()=>dialog.close());
 $('cancel').addEventListener('click',()=>dialog.close());
 $('prevMonth').addEventListener('click',()=>{viewDate.setDate(viewDate.getDate()-7);render();});
 $('nextMonth').addEventListener('click',()=>{viewDate.setDate(viewDate.getDate()+7);render();});
+$('vrCheckDate').value=iso(new Date());
+$('vrCheckDate').addEventListener('change',renderVRDashboard);
+setInterval(()=>{if(!document.hidden && !dialog.open && !$('fleetDialog').open)loadSlots();},60000);
 $('today').addEventListener('click',()=>{viewDate=new Date();render();});
 loadSlots();
 
