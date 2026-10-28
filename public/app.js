@@ -5,6 +5,7 @@ const form = $('slotForm');
 let viewDate = new Date();
 let slots = [];
 let reminders = [];
+let replacementVehicles = [];
 
 const weekFmt = new Intl.DateTimeFormat('fr-FR', {day:'numeric',month:'long'});
 const weekStart = (date) => {const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());d.setDate(d.getDate()-(d.getDay()+6)%7);return d;};
@@ -25,10 +26,12 @@ async function api(path, options={}) {
 async function loadSlots() {
   $('status').textContent = 'Chargement des rendez-vous…';
   try {
-    const results = await Promise.allSettled([api('/api/slots'),api('/api/reminders')]);
+    const results = await Promise.allSettled([api('/api/slots'),api('/api/reminders'),api('/api/replacement-vehicles')]);
     if (results[0].status !== 'fulfilled') throw results[0].reason;
     slots = results[0].value;
     reminders = results[1].status === 'fulfilled' ? results[1].value : [];
+    replacementVehicles = results[2].status === 'fulfilled' ? results[2].value : [];
+    refreshVehicleOptions(); renderFleet();
     $('status').textContent = `${slots.length} rendez-vous enregistré(s).` + (results[1].status === 'fulfilled' ? '' : ' Les rappels ne sont pas disponibles pour le moment.');
     render();
   } catch (e) {
@@ -63,6 +66,7 @@ function render() {
       const note=document.createElement('span');note.textContent=s.notes||'Cliquer pour consulter ou modifier';
       name.style.display = 'block'; note.style.display = 'block'; note.style.marginTop = '8px'; note.style.whiteSpace = 'pre-wrap'; note.style.overflowWrap = 'anywhere'; ev.append(name,note);
       if(reminder){const bell=document.createElement('small');bell.textContent='🔔 Rappel pièces';ev.append(bell);}
+      if(s.replacement_vehicle_id){const car=document.createElement('small');car.textContent='🚗 '+(s.replacement_vehicle_name||'VR');ev.append(car);}
       ev.addEventListener('click',()=>openEdit(s));cell.append(ev);
     }
     calendar.append(cell);
@@ -71,13 +75,14 @@ function render() {
 function openNew(day=iso(new Date())) {
   form.reset(); $('slotId').value=''; $('reminderId').value=''; $('entryDate').value=day; $('returnDate').value='';
   $('formTitle').textContent='Nouveau rendez-vous'; $('deleteSlot').classList.add('hidden');
-  $('partsNeeded').value='no'; $('reminderAt').value=''; $('reminderMessage').value=''; $('reminderCompleted').checked=false;
+  $('replacementVehicle').value=''; $('partsNeeded').value='no'; $('reminderAt').value=''; $('reminderMessage').value=''; $('reminderCompleted').checked=false;
   dialog.showModal();
 }
 function openEdit(s) {
   const r = reminders.find(item => item.slot_id === s.id);
   $('slotId').value=s.id; $('entryDate').value=s.entry_date; $('returnDate').value=s.return_date || '';
   $('vehicleInfo').value=s.vehicle_info || ''; $('notes').value=s.notes || '';
+  $('replacementVehicle').value=s.replacement_vehicle_id==null?'':String(s.replacement_vehicle_id);
   $('reminderId').value=r?.id || '';
   $('partsNeeded').value=r ? 'yes' : 'no';
   $('reminderAt').value=toLocalInput(r?.remind_at);
@@ -90,8 +95,10 @@ form.addEventListener('submit', async e => {
   e.preventDefault();
   const existingId=$('slotId').value;
   const payload={...(existingId?{id:existingId}:{}), entry_date:$('entryDate').value, return_date:$('returnDate').value || null,
-    vehicle_info:$('vehicleInfo').value.trim() || null, notes:$('notes').value.trim() || null};
+    vehicle_info:$('vehicleInfo').value.trim() || null, notes:$('notes').value.trim() || null,
+    replacement_vehicle_id:$('replacementVehicle').value?Number($('replacementVehicle').value):null};
   if(!payload.entry_date){alert('La date d’entrée est obligatoire.');return;}
+  if(payload.replacement_vehicle_id&&!payload.return_date){alert('Pour réserver un VR, renseigne la date de restitution du client.');return;}
   const reminderAt=$('reminderAt').value;
   if ($('partsNeeded').value === 'yes' && !reminderAt) { alert('Choisis une date et une heure pour le rappel des pièces.'); return; }
   try {
@@ -113,6 +120,27 @@ $('deleteSlot').addEventListener('click', async () => {
   try { await api('/api/slots?id='+encodeURIComponent(id), {method:'DELETE'}); dialog.close(); await loadSlots(); }
   catch(err) { alert('Suppression impossible : '+err.message); }
 });
+
+function refreshVehicleOptions(){
+ const select=$('replacementVehicle');const chosen=select.value;
+ select.replaceChildren(new Option('Aucun véhicule de remplacement',''));
+ for(const v of replacementVehicles){if(v.active||String(v.id)===chosen)select.add(new Option(v.name+(v.active?'':' (désactivé)'),String(v.id)));}
+ select.value=chosen;
+}
+function renderFleet(){
+ const el=$('fleetList');if(!el)return;el.replaceChildren();
+ for(const v of replacementVehicles){
+  const row=document.createElement('div');row.className='fleet-row';
+  const name=document.createElement('input');name.value=v.name;name.maxLength=60;name.setAttribute('aria-label','Nom du véhicule '+v.id);
+  const active=document.createElement('input');active.type='checkbox';active.checked=!!v.active;active.setAttribute('aria-label','VR actif');
+  const save=document.createElement('button');save.type='button';save.textContent='Enregistrer';save.className='secondary-button';
+  save.onclick=async()=>{try{await api('/api/replacement-vehicles',{method:'PUT',body:JSON.stringify({id:v.id,name:name.value,active:active.checked})});await loadSlots();}catch(e){alert('Modification VR impossible : '+e.message);}};
+  row.append(name,active,save);el.append(row);
+ }
+}
+$('manageFleet').addEventListener('click',()=>{$('fleetDialog').showModal();});
+$('closeFleet').addEventListener('click',()=>{$('fleetDialog').close();});
+
 $('newSlot').addEventListener('click',()=>openNew());
 $('closeDialog').addEventListener('click',()=>dialog.close());
 $('cancel').addEventListener('click',()=>dialog.close());

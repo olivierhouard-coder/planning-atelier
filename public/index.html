@@ -18,7 +18,7 @@
         <p class="subtitle">Planning partagé — Olivier & Christophe</p>
       </div>
     </div>
-    <div class="header-actions"><button id="enableNotifications" type="button">🔔 Activer les notifications</button><button id="newSlot">＋ Nouveau rendez-vous</button></div>
+    <div class="header-actions"><button id="enableNotifications" type="button">🔔 Activer les notifications</button><button id="manageFleet" type="button">🚗 Gérer les VR</button><button id="newSlot">＋ Nouveau rendez-vous</button></div>
   </header>
   <main>
     <div class="toolbar">
@@ -55,6 +55,13 @@
         <textarea id="notes" rows="3" placeholder="Informations complémentaires"></textarea>
       </label>
       <div class="reminder-panel">
+        <h3>🚗 Véhicule de remplacement</h3>
+        <label>Réserver un VR
+          <select id="replacementVehicle"><option value="">Aucun véhicule de remplacement</option></select>
+        </label>
+        <p class="hint">Départ du VR = entrée du client. Retour du VR = restitution du client. Les deux journées sont réservées. Une date de restitution est obligatoire pour réserver un VR.</p>
+      </div>
+      <div class="reminder-panel">
         <h3>Commande de pièces et rappel</h3>
         <label>Pièces à commander ?
           <select id="partsNeeded">
@@ -78,6 +85,13 @@
         <button type="submit">Enregistrer</button>
       </div>
     </form>
+  </dialog>
+  <dialog id="fleetDialog">
+    <div class="fleet-modal">
+      <div class="dialog-head"><h2>🚗 Véhicules de remplacement</h2><button id="closeFleet" type="button" class="icon-button" aria-label="Fermer">×</button></div>
+      <p class="hint">Modifie les noms ou désactive un VR. Les réservations déjà enregistrées sont conservées.</p>
+      <div id="fleetList"></div>
+    </div>
   </dialog>
   <script src="/app.js" defer></script>
 </body>
