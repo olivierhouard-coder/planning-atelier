@@ -131,11 +131,11 @@ function renderVRDashboard(){
  const summary=$('vrSummary'),list=$('vrAvailability');if(!summary||!list)return;
  const date=$('vrCheckDate').value||iso(new Date());
  const activeVehicles=replacementVehicles.filter(v=>v.active);
- const occupied=(v,day)=>slots.find(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&s.entry_date<=day&&s.return_date>=day);
+ const occupied=(v,day)=>slots.find(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&s.entry_date<=day && (!s.actual_return_date ? (s.return_date>=day || (day===iso(new Date()) && s.return_date<day)) : s.actual_return_date>=day));
  const free=activeVehicles.filter(v=>!occupied(v,date)).length;
  const tomorrow=iso(new Date(parseDate(date).getTime()+86400000));
  const inTwo=iso(new Date(parseDate(date).getTime()+2*86400000));
- const returnsSoon=activeVehicles.filter(v=>slots.some(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&s.return_date>=date&&s.return_date<=inTwo)).length;
+ const returnsSoon=activeVehicles.filter(v=>slots.some(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&!s.returned_at&&s.return_date>=date&&s.return_date<=inTwo)).length;
  summary.replaceChildren();
  for(const [n,label] of [[free,'Disponibles'],[activeVehicles.length-free,'Réservés'],[returnsSoon,'Retours prévus sous 48 h']]){
   const tile=document.createElement('div');tile.className='vr-stat';
@@ -149,11 +149,13 @@ function renderVRDashboard(){
   const line=document.createElement('div');line.className='vr-availability-row';
   const name=document.createElement('strong');name.textContent='🚗 '+v.name;
   const detail=document.createElement('div');detail.className='vr-detail';
-  const state=document.createElement('span');state.className=current?'vr-busy':'vr-free';state.textContent=current?'Réservé jusqu’au '+current.return_date:'Disponible le '+date;
+  const state=document.createElement('span');state.className=current?'vr-busy':'vr-free';state.textContent=current?(current.returned_at?'Restitué le '+current.actual_return_date+' · jour bloqué':current.return_date<date?'Retour en retard — à confirmer':'Prêt prévu jusqu’au '+current.return_date):'Disponible selon planning le '+date;
   detail.append(state);
   if(current){const who=document.createElement('span');who.textContent=current.vehicle_info||'Client non renseigné';detail.append(who);}
   else if(next){const upcoming=document.createElement('span');upcoming.textContent='Prochain départ : '+next.entry_date+(next.vehicle_info?' · '+next.vehicle_info:'');detail.append(upcoming);}
   line.append(name,detail);if(current){const open=document.createElement('button');open.type='button';open.textContent='Voir RDV';open.className='secondary-button';open.addEventListener('click',()=>openEdit(current));line.append(open);}
+  const ongoing=slots.find(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&!s.returned_at&&s.entry_date<=iso(new Date())&&(s.return_date>=iso(new Date())||s.return_date<iso(new Date())));
+  if(date===iso(new Date())&&ongoing){const confirmReturn=document.createElement('button');confirmReturn.type='button';confirmReturn.textContent='✓ VR réellement restitué';confirmReturn.className='return-button';confirmReturn.addEventListener('click',async()=>{if(!confirm('Confirmer que '+v.name+' est physiquement revenu à l’atelier aujourd’hui ? Le jour du retour restera bloqué. Cette action ne pourra pas être annulée depuis le planning.'))return;confirmReturn.disabled=true;try{await api('/api/replacement-returns',{method:'POST',body:JSON.stringify({slot_id:ongoing.id})});await loadSlots();}catch(e){alert('Retour non confirmé : '+e.message);confirmReturn.disabled=false;}});line.append(confirmReturn);}
   list.append(line);
  }
  if(!activeVehicles.length){list.textContent='Aucun véhicule de remplacement actif.';}
