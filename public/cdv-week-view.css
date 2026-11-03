@@ -26,3 +26,47 @@ main{max-width:1800px;margin:20px auto;padding:0 22px}
 @media(max-width:950px){.week-calendar{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}header{padding:14px 16px}.header-actions button{font-size:.85rem}main{padding:0 14px}}
 @media(max-width:580px){.week-calendar{grid-template-columns:1fr}.week-event.cdv-slot{grid-template-columns:58px minmax(0,1fr)}header{align-items:stretch;flex-direction:column}.header-actions{display:flex;flex-wrap:wrap}.header-actions button{width:auto;flex:1}.toolbar h2{font-size:1rem}.brand-logo{width:42px;height:42px}}
 @media(pointer:coarse){button{min-height:44px}input,select,textarea{font-size:16px}}
+
+/* Vue globale : cinq jours côte à côte, sans couper les listes. */
+.cdv-view-controls{display:flex;align-items:center;gap:12px;margin:8px 0;font-size:.8rem;color:#637083}
+.cdv-view-controls button{background:#fff;color:#334155;border:1px solid #dbe1eb;font-size:.8rem;padding:8px 12px}
+.cdv-compact header{padding:8px 16px;gap:8px}.cdv-compact .brand-logo{width:32px;height:32px}.cdv-compact h1{font-size:1.1rem}
+.cdv-compact .eyebrow,.cdv-compact .subtitle{display:none}.cdv-compact .header-actions button{padding:8px 10px;font-size:.78rem}
+.cdv-compact main{max-width:none;margin:8px auto;padding:0 12px}.cdv-compact .toolbar{margin-bottom:4px}
+.cdv-compact .week-count{margin:3px 0;font-size:.78rem}.cdv-compact #status{margin:2px 0;min-height:0}
+.cdv-compact #pushStatus{margin:2px 0;font-size:.7rem}.cdv-compact .cdv-fleet-panel{margin:5px 0}
+.cdv-compact .cdv-fleet-panel>summary{padding:7px 10px;font-size:.78rem}
+.cdv-compact .week-calendar{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:8px;background:transparent;border:0;box-shadow:none;align-items:stretch}
+.cdv-compact .week-day{border-radius:8px}.cdv-compact .week-day-head{padding:7px 9px;justify-content:space-between;display:flex}
+.cdv-compact .week-day-head h3{font-size:.9rem;margin:0}.cdv-compact .day-add{padding:0 7px;min-height:32px}
+.cdv-compact .week-event.cdv-slot{grid-template-columns:32px minmax(0,1fr);gap:5px;padding:9px 7px;min-height:44px}
+.cdv-compact .week-event.cdv-slot strong{font-size:.82rem;line-height:1.3;white-space:normal}
+.cdv-compact .cdv-slot-kind{font-size:.65rem}.cdv-compact .week-event.cdv-slot .cdv-slot-note{display:none}
+.cdv-compact .week-event.cdv-slot .cdv-slot-tags{gap:3px;margin-top:3px}.cdv-compact .week-event.cdv-slot small{font-size:.62rem;padding:1px 3px}
+.cdv-compact .empty-day{padding:12px 8px;font-size:.75rem}.cdv-compact .cdv-day-total{padding:6px 8px;font-size:.65rem}
+.cdv-compact .cdv-ongoing>summary{padding:8px;font-size:.7rem}.cdv-compact #cdvHolidayBanner{padding:7px 10px;margin:5px 0;font-size:.75rem}
+.cdv-compact .cdv-holiday-label{padding:5px 8px;font-size:.67rem}.cdv-compact .legend{font-size:.7rem;margin-top:6px}
+@media(max-width:600px) and (orientation:portrait){
+ .cdv-compact header{flex-direction:row;flex-wrap:wrap}.cdv-compact .brand-logo{display:none}.cdv-compact .header-actions{width:auto;display:flex;flex:1;justify-content:flex-end}
+ .cdv-compact .header-actions button{flex:0 1 auto;width:auto;font-size:.7rem;padding:7px}
+ .cdv-compact main{padding:0 6px}.cdv-compact .toolbar{gap:4px}.cdv-compact .toolbar h2{font-size:.78rem;margin-left:0}.cdv-compact .toolbar button{padding:6px 8px;min-height:36px}
+ .cdv-compact .cdv-view-controls{gap:6px;margin:4px 0}.cdv-compact .cdv-view-controls span{font-size:.65rem;line-height:1.25}.cdv-compact .cdv-view-controls button{font-size:.7rem;padding:6px;min-height:36px}
+ .cdv-compact .week-calendar{grid-template-columns:1fr;gap:5px}
+ .cdv-compact .week-day{display:grid;grid-template-columns:68px minmax(0,1fr)}
+ .cdv-compact .week-day-head{grid-column:1;grid-row:1;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:2px;padding:7px 5px;border:0;background:#f8fafc}
+ .cdv-compact .week-day-head h3{font-size:.73rem}.cdv-compact .day-add{min-height:30px}
+ .cdv-compact .cdv-day-events{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}
+ .cdv-compact .week-event.cdv-slot{grid-template-columns:18px minmax(0,1fr);padding:7px 4px;gap:2px}
+ .cdv-compact .week-event.cdv-slot strong{font-size:.72rem}
+ .cdv-compact .cdv-slot-kind{font-size:0}.cdv-compact .cdv-slot-kind::after{content:attr(data-short);font-size:.65rem}
+ .cdv-compact .cdv-day-total,.cdv-compact .cdv-ongoing,.cdv-compact .cdv-holiday-label{grid-column:1/-1}
+ .cdv-compact .cdv-day-total{padding:3px 6px}.cdv-compact .cdv-ongoing>summary{padding:5px 8px}
+ .cdv-compact .cdv-ongoing .week-event.cdv-slot{grid-template-columns:28px minmax(0,1fr)}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .cdv-compact header{padding:4px 10px;flex-direction:row}.cdv-compact .brand-logo{display:none}.cdv-compact .header-actions{width:auto;display:flex}
+ .cdv-compact .header-actions button{width:auto;min-height:32px;font-size:.7rem}.cdv-compact main{margin:5px auto}
+ .cdv-compact .toolbar button,.cdv-compact .cdv-view-controls button{min-height:30px;padding:5px 9px}
+ .cdv-compact .week-calendar{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.cdv-compact .week-day-head{padding:4px 6px}
+ .cdv-compact .week-event.cdv-slot{padding:6px 5px}.cdv-compact .cdv-view-controls{margin:4px 0}
+}
