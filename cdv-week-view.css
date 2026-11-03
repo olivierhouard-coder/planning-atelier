@@ -1,72 +1,35 @@
-/* CDV — vue semaine claire — 2026-11-02 */
+/* CDV — semaine horizontale, commentaires et repères VR / pièces. */
 body{background:#f3f5f7;color:#202b3b}body::before{display:none}
-header{background:#fff;color:#202b3b;padding:17px 24px;border-bottom:1px solid #e2e6ec;gap:18px}
-.brand{gap:12px}.brand-logo{width:48px;height:48px;border-radius:0}.eyebrow{color:#9f2636;letter-spacing:.12em;margin-bottom:3px}.subtitle{color:#637083;font-size:.85rem;margin:4px 0 0}h1{font-size:1.5rem}
-button{font-weight:500}#newSlot{background:#a92538}.header-actions #enableNotifications,.header-actions #manageFleet{background:#f0f2f5;color:#334155}
-main{max-width:1800px;margin:20px auto;padding:0 22px}
-.toolbar{gap:9px;flex-wrap:wrap}.toolbar h2{font-size:1.15rem}.toolbar button{border-radius:7px}.toolbar #today{background:#fff;color:#334155;border:1px solid #dbe1eb}
-.week-count{color:#596678;font-weight:400;font-size:.88rem;margin:6px 0}#status{font-size:.82rem;margin:4px 0;color:#637083}.push-status{font-size:.8rem;margin:4px 0 13px;background:transparent;padding:0}
-.week-calendar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start;margin-top:16px}
-.week-day{background:#fff;border:1px solid #e1e5eb;border-radius:12px;min-height:0;padding:0;box-shadow:none;overflow:hidden}
+header{background:#fff;color:#202b3b;padding:8px 16px;border-bottom:1px solid #e2e6ec;gap:10px;flex-direction:row;align-items:center}
+.brand{gap:8px}.brand-logo{width:32px;height:32px}.eyebrow,.subtitle{display:none}h1{font-size:1.1rem}
+button{font-weight:500}#newSlot{background:#a92538;font-size:.8rem;padding:8px 10px}.header-actions{display:flex;gap:6px;flex-wrap:nowrap;width:auto}.header-actions button{width:auto}
+main{max-width:none;margin:6px auto;padding:0 10px}.toolbar{gap:6px;margin:0;flex-wrap:nowrap}.toolbar h2{font-size:.95rem;margin:0 auto}.toolbar button{padding:5px 10px;min-height:32px}
+.week-count{color:#637083;font-size:.72rem;margin:3px 0}#status{font-size:.75rem;margin:3px 0;min-height:0}.cdv-status-ok{display:none}
+.cdv-view-controls{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0;font-size:.7rem;color:#637083}.cdv-view-controls button{background:white;border:1px solid #dbe1eb;color:#334155;font-size:.7rem;padding:5px 9px;min-height:30px}
+.cdv-options{position:relative;color:#334155}.cdv-options>summary{cursor:pointer;background:#fff;border:1px solid #dbe1eb;border-radius:6px;padding:8px;font-size:.75rem}
+.cdv-options-content{position:absolute;right:0;top:100%;z-index:30;width:min(280px,85vw);display:grid;gap:8px;background:white;padding:12px;border:1px solid #dbe1eb;border-radius:8px;box-shadow:0 6px 20px #17203324}
+.cdv-options-content button{width:100%;font-size:.8rem;background:#edf1f5;color:#334155}.cdv-options-content #pushStatus{font-size:.75rem;color:#637083;margin:0;padding:0;background:none}
+.cdv-fleet-panel{background:#fff;border:1px solid #e2e6ec;border-radius:6px;margin:4px 0;font-size:.7rem;position:relative}.cdv-fleet-panel>summary{padding:5px 8px;cursor:pointer}.cdv-fleet-panel[open] .vr-dashboard{position:absolute;z-index:25;top:100%;left:0;right:0;margin:0;max-height:70dvh;overflow:auto;box-shadow:0 8px 28px #17203330;border:1px solid #dbe1eb}
+#cdvHolidayBanner{background:#fff3dd;color:#79551e;padding:5px 8px;border-radius:6px;margin:4px 0;font-size:.72rem}#cdvHolidayBanner[hidden]{display:none}
+.week-calendar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;align-items:stretch;margin-top:5px;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible}
+.week-day{background:white;border:1px solid #dfe4ec;border-radius:7px;display:flex;flex-direction:column;min-width:0;min-height:0;padding:0;overflow:hidden}
 .week-day.today{outline:0}.week-day.today .week-day-head{box-shadow:inset 0 3px #a92538}
-.week-day-head{padding:15px 17px;margin:0;background:#fff;border-bottom:1px solid #e8ecf0;gap:9px}.week-day-head h3{font-size:1.15rem;font-weight:500}
-.day-add{background:transparent;color:#64748b;font-size:1.25rem;padding:4px 10px;border-radius:6px;min-height:36px}
-.week-event.cdv-slot{display:grid;grid-template-columns:59px minmax(0,1fr);align-items:start;gap:12px;background:#fff;color:#202b3b;border:0;border-bottom:1px solid #edf0f3;border-radius:0;margin:0;padding:18px 16px;font-size:.94rem;font-weight:400;line-height:1.45;text-align:left;width:100%}
-.week-event.cdv-slot:hover{background:#f9fafb;filter:none}.cdv-slot-kind{font-size:.75rem;color:#405a77;padding-top:3px}.week-event .cdv-exit{color:#257250}
-.cdv-slot-content{min-width:0}.week-event.cdv-slot strong{display:block;font-size:1.03rem;font-weight:500;color:#202b3b;white-space:pre-wrap;overflow-wrap:anywhere}
-.week-event.cdv-slot .cdv-slot-note{display:block;margin-top:9px;color:#344256;font-weight:400;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
-.week-event.cdv-slot .cdv-slot-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.week-event.cdv-slot small{font-size:.73rem;font-weight:400;color:#79551e;background:#fff4df;border-radius:4px;padding:3px 6px}
-.empty-day{font-size:.87rem;color:#778394;margin:0;padding:22px 17px}
-.cdv-ongoing{background:#fafbfc}.cdv-ongoing>summary{padding:13px 17px;color:#637083;font-size:.85rem;cursor:pointer}.cdv-ongoing .week-event{background:#fafbfc}
-.cdv-day-total{font-size:.77rem;color:#778394;padding:11px 17px;background:#fff;border-top:1px solid #edf0f3}
-#cdvHolidayBanner{padding:12px 15px;background:#fff3dd;color:#79551e;border-radius:8px;margin:12px 0;font-size:.9rem}#cdvHolidayBanner[hidden]{display:none}
-.cdv-holiday .week-day-head{background:#fff8eb}.cdv-holiday-label{padding:8px 17px;color:#79551e;background:#fff8eb;font-size:.77rem}
-.cdv-fleet-panel{background:#fff;border:1px solid #e2e6ec;border-radius:9px;margin:13px 0}.cdv-fleet-panel>summary{padding:13px 16px;font-size:.9rem;font-weight:500;color:#405067;cursor:pointer}.cdv-fleet-panel .vr-dashboard{margin:0;border:0;box-shadow:none}
-.legend{line-height:1.5;margin-top:14px;font-size:.8rem}.header-actions{gap:7px}
-@media(max-width:950px){.week-calendar{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}header{padding:14px 16px}.header-actions button{font-size:.85rem}main{padding:0 14px}}
-@media(max-width:580px){.week-calendar{grid-template-columns:1fr}.week-event.cdv-slot{grid-template-columns:58px minmax(0,1fr)}header{align-items:stretch;flex-direction:column}.header-actions{display:flex;flex-wrap:wrap}.header-actions button{width:auto;flex:1}.toolbar h2{font-size:1rem}.brand-logo{width:42px;height:42px}}
-@media(pointer:coarse){button{min-height:44px}input,select,textarea{font-size:16px}}
-
-/* Vue globale : cinq jours côte à côte, sans couper les listes. */
-.cdv-view-controls{display:flex;align-items:center;gap:12px;margin:8px 0;font-size:.8rem;color:#637083}
-.cdv-view-controls button{background:#fff;color:#334155;border:1px solid #dbe1eb;font-size:.8rem;padding:8px 12px}
-.cdv-compact header{padding:8px 16px;gap:8px}.cdv-compact .brand-logo{width:32px;height:32px}.cdv-compact h1{font-size:1.1rem}
-.cdv-compact .eyebrow,.cdv-compact .subtitle{display:none}.cdv-compact .header-actions button{padding:8px 10px;font-size:.78rem}
-.cdv-compact main{max-width:none;margin:8px auto;padding:0 12px}.cdv-compact .toolbar{margin-bottom:4px}
-.cdv-compact .week-count{margin:3px 0;font-size:.78rem}.cdv-compact #status{margin:2px 0;min-height:0}
-.cdv-compact #pushStatus{margin:2px 0;font-size:.7rem}.cdv-compact .cdv-fleet-panel{margin:5px 0}
-.cdv-compact .cdv-fleet-panel>summary{padding:7px 10px;font-size:.78rem}
-.cdv-compact .week-calendar{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:8px;background:transparent;border:0;box-shadow:none;align-items:stretch}
-.cdv-compact .week-day{border-radius:8px}.cdv-compact .week-day-head{padding:7px 9px;justify-content:space-between;display:flex}
-.cdv-compact .week-day-head h3{font-size:.9rem;margin:0}.cdv-compact .day-add{padding:0 7px;min-height:32px}
-.cdv-compact .week-event.cdv-slot{grid-template-columns:32px minmax(0,1fr);gap:5px;padding:9px 7px;min-height:44px}
-.cdv-compact .week-event.cdv-slot strong{font-size:.82rem;line-height:1.3;white-space:normal}
-.cdv-compact .cdv-slot-kind{font-size:.65rem}.cdv-compact .week-event.cdv-slot .cdv-slot-note{display:none}
-.cdv-compact .week-event.cdv-slot .cdv-slot-tags{gap:3px;margin-top:3px}.cdv-compact .week-event.cdv-slot small{font-size:.62rem;padding:1px 3px}
-.cdv-compact .empty-day{padding:12px 8px;font-size:.75rem}.cdv-compact .cdv-day-total{padding:6px 8px;font-size:.65rem}
-.cdv-compact .cdv-ongoing>summary{padding:8px;font-size:.7rem}.cdv-compact #cdvHolidayBanner{padding:7px 10px;margin:5px 0;font-size:.75rem}
-.cdv-compact .cdv-holiday-label{padding:5px 8px;font-size:.67rem}.cdv-compact .legend{font-size:.7rem;margin-top:6px}
-@media(max-width:600px) and (orientation:portrait){
- .cdv-compact header{flex-direction:row;flex-wrap:wrap}.cdv-compact .brand-logo{display:none}.cdv-compact .header-actions{width:auto;display:flex;flex:1;justify-content:flex-end}
- .cdv-compact .header-actions button{flex:0 1 auto;width:auto;font-size:.7rem;padding:7px}
- .cdv-compact main{padding:0 6px}.cdv-compact .toolbar{gap:4px}.cdv-compact .toolbar h2{font-size:.78rem;margin-left:0}.cdv-compact .toolbar button{padding:6px 8px;min-height:36px}
- .cdv-compact .cdv-view-controls{gap:6px;margin:4px 0}.cdv-compact .cdv-view-controls span{font-size:.65rem;line-height:1.25}.cdv-compact .cdv-view-controls button{font-size:.7rem;padding:6px;min-height:36px}
- .cdv-compact .week-calendar{grid-template-columns:1fr;gap:5px}
- .cdv-compact .week-day{display:grid;grid-template-columns:68px minmax(0,1fr)}
- .cdv-compact .week-day-head{grid-column:1;grid-row:1;flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:2px;padding:7px 5px;border:0;background:#f8fafc}
- .cdv-compact .week-day-head h3{font-size:.73rem}.cdv-compact .day-add{min-height:30px}
- .cdv-compact .cdv-day-events{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}
- .cdv-compact .week-event.cdv-slot{grid-template-columns:18px minmax(0,1fr);padding:7px 4px;gap:2px}
- .cdv-compact .week-event.cdv-slot strong{font-size:.72rem}
- .cdv-compact .cdv-slot-kind{font-size:0}.cdv-compact .cdv-slot-kind::after{content:attr(data-short);font-size:.65rem}
- .cdv-compact .cdv-day-total,.cdv-compact .cdv-ongoing,.cdv-compact .cdv-holiday-label{grid-column:1/-1}
- .cdv-compact .cdv-day-total{padding:3px 6px}.cdv-compact .cdv-ongoing>summary{padding:5px 8px}
- .cdv-compact .cdv-ongoing .week-event.cdv-slot{grid-template-columns:28px minmax(0,1fr)}
-}
-@media(max-height:500px) and (orientation:landscape){
- .cdv-compact header{padding:4px 10px;flex-direction:row}.cdv-compact .brand-logo{display:none}.cdv-compact .header-actions{width:auto;display:flex}
- .cdv-compact .header-actions button{width:auto;min-height:32px;font-size:.7rem}.cdv-compact main{margin:5px auto}
- .cdv-compact .toolbar button,.cdv-compact .cdv-view-controls button{min-height:30px;padding:5px 9px}
- .cdv-compact .week-calendar{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.cdv-compact .week-day-head{padding:4px 6px}
- .cdv-compact .week-event.cdv-slot{padding:6px 5px}.cdv-compact .cdv-view-controls{margin:4px 0}
-}
+.week-day-head{display:flex;align-items:center;justify-content:space-between;gap:3px;margin:0;padding:5px 7px;border-bottom:1px solid #edf0f3;background:#fff;flex-shrink:0}.week-day-head h3{font-size:.82rem;font-weight:500;margin:0}
+.day-add{padding:0 7px;min-height:28px;background:transparent;color:#637083;border-radius:4px;font-size:1.1rem}
+.cdv-holiday .week-day-head,.cdv-holiday-label{background:#fff8eb}.cdv-holiday-label{padding:3px 6px;font-size:.67rem;color:#79551e;flex-shrink:0}
+.cdv-day-events{display:flex;flex-direction:column;flex:1;min-height:0}
+.week-event.cdv-slot{display:grid;grid-template-columns:15px minmax(0,1fr);gap:4px;align-items:start;width:100%;text-align:left;background:white;color:#202b3b;border:0;border-bottom:1px solid #edf0f3;border-radius:0;margin:0;padding:6px 7px;min-height:44px;flex-shrink:0;font-weight:400;line-height:1.2}
+.week-event.cdv-slot:hover{background:#f8fafc;filter:none}.cdv-slot-kind{font-size:0;color:#405a77;padding-top:1px}.cdv-slot-kind::after{content:attr(data-short);font-size:11px}.cdv-slot-kind.cdv-exit{color:#257250}
+.cdv-slot-content{min-width:0}.week-event.cdv-slot strong{display:block;font-size:12px;font-weight:500;line-height:1.2;overflow-wrap:anywhere}
+.week-event.cdv-slot .cdv-slot-note{display:block;font-size:12px;color:#526174;line-height:1.2;margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere}
+.cdv-compact .cdv-slot-note{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.cdv-slot-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}.week-event.cdv-slot small{display:inline-flex;align-items:center;font-size:11px;color:#795114;background:#fff3dc;padding:1px 4px;border-radius:3px;font-weight:400;margin:0}
+.empty-day{font-size:11px;color:#778394;padding:10px 7px;margin:0}
+.cdv-ongoing-button{font-size:11px;min-height:28px;background:#fafbfc;color:#637083;text-align:left;padding:5px 7px;border-radius:0;flex-shrink:0}
+.cdv-day-total{font-size:11px;color:#637083;padding:4px 7px;border-top:1px solid #edf0f3;flex-shrink:0}
+.cdv-more{flex-shrink:0;width:100%;min-height:32px;padding:5px;background:#edf3f8;color:#334155;border-radius:0;font-size:11px;text-align:left}
+[hidden]{display:none!important}.legend{margin:5px 0 0;font-size:11px;color:#637083;line-height:1.25}
+.cdv-day-dialog{max-height:85dvh;padding:16px;width:min(620px,calc(100% - 20px));overflow:auto}.cdv-day-dialog .dialog-head{gap:12px;margin-bottom:8px}.cdv-day-dialog .dialog-head h2{margin:0;font-size:1rem}.cdv-day-dialog .dialog-head button{font-size:.8rem;background:#edf1f5;color:#334155}.cdv-day-dialog .cdv-slot-note{display:block!important;overflow:visible}
+body.cdv-compact{overflow:hidden}body:not(.cdv-compact) .week-calendar{height:auto!important;min-height:350px}body:not(.cdv-compact) .cdv-more{display:none}body:not(.cdv-compact) .cdv-slot[hidden]{display:grid!important}
+@media(max-width:650px){header{padding:5px 7px;gap:4px}.brand-logo{display:none}h1{font-size:.85rem}.header-actions{gap:4px}#newSlot{font-size:.68rem;padding:6px}.cdv-options>summary{font-size:.68rem;padding:7px}main{padding:0 5px}.toolbar h2{font-size:.75rem}.toolbar button{padding:4px 7px;min-height:30px;font-size:.75rem}.cdv-view-controls{font-size:11px}.cdv-view-controls span{display:none}.week-calendar{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}.week-day-head{padding:5px 3px;flex-wrap:wrap}.week-day-head h3{font-size:11px}.day-add{min-height:26px;padding:0 5px}.week-event.cdv-slot{grid-template-columns:10px minmax(0,1fr);gap:2px;padding:5px 3px}.week-event.cdv-slot strong,.week-event.cdv-slot .cdv-slot-note{font-size:11px}.week-event.cdv-slot small{font-size:11px;padding:1px}.cdv-day-total{padding:3px;font-size:11px}.cdv-ongoing-button{padding:4px 3px}.legend{font-size:11px}}
+@media(max-height:500px) and (orientation:landscape){header{padding:3px 8px}.brand-logo{display:none}.week-count{display:none}.cdv-view-controls{margin:2px 0}.week-day-head{padding:3px 6px}.cdv-fleet-panel{margin:2px 0}.week-calendar{gap:5px}}
