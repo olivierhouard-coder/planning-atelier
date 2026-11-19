@@ -8,6 +8,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/cdv-week-view.css?v=20261103">
+  <link rel="stylesheet" href="/todo.css?v=20261119-prive">
 </head>
 <body>
   <header>
@@ -20,8 +21,9 @@
       </div>
     </div>
     <div class="header-actions"><button id="enableNotifications" type="button">🔔 Activer les notifications</button><button id="manageFleet" type="button">🚗 Gérer les VR</button><button id="newSlot">＋ Nouveau rendez-vous</button></div>
+    <nav class="todo-nav" aria-label="Vues du planning"><a id="planningTab" href="#planning" aria-current="page">Planning</a><a id="todoTab" href="#a-faire">À faire</a></nav>
   </header>
-  <main>
+  <main id="planningView">
     <div class="toolbar">
       <button id="prevMonth" aria-label="Semaine précédente">‹</button>
       <h2 id="monthLabel">Chargement…</h2>
@@ -41,6 +43,34 @@
     <section class="legend">Vue semaine · Touchez un rendez-vous pour le modifier, ou « + RDV » pour en ajouter un.</section>
   </main>
 
+  <main id="todoView" hidden>
+    <h2>À faire · Olivier</h2>
+    <form id="todoLoginForm">
+      <label for="todoAccessKey">Ton code privé</label>
+      <input id="todoAccessKey" type="password" autocomplete="current-password" required minlength="32">
+      <button type="submit">Ouvrir ma liste</button>
+    </form>
+    <div id="todoContent" hidden>
+    <button id="todoLogout" type="button">Verrouiller ma liste</button>
+    <form id="todoForm">
+      <label for="todoMessage">Tâche</label>
+      <textarea id="todoMessage" maxlength="500" rows="2" placeholder="Appeler le client, relancer l’EAD…" required></textarea>
+      <label for="todoReminder">Rappel (facultatif)</label>
+      <input type="datetime-local" id="todoReminder">
+      <div class="todo-actions">
+        <button type="submit">Ajouter</button>
+        <button type="button" id="todoEnablePush">Activer les notifications</button>
+      </div>
+    </form>
+
+    <ul id="todoList"></ul>
+    <details id="todoDone" hidden>
+      <summary>Tâches terminées</summary>
+      <ul id="todoDoneList"></ul>
+    </details>
+    </div>
+    <p id="todoStatus" role="status"></p>
+  </main>
   <dialog id="slotDialog">
     <form id="slotForm">
       <div class="dialog-head">
@@ -66,6 +96,8 @@
         <label>Réserver un VR
           <select id="replacementVehicle"><option value="">Aucun véhicule de remplacement</option></select>
         </label>
+        <label class="check-label"><input type="checkbox" id="forceReplacement"> Forcer l’affectation du VR</label>
+        <p class="hint">Le forçage autorise une réservation malgré un prêt non restitué ou des dates déjà réservées. Une confirmation est demandée.</p>
         <p class="hint">Départ du VR = entrée du client. Retour du VR = restitution du client. Les deux journées sont réservées. Une date de restitution est obligatoire pour réserver un VR.</p>
       </div>
       <div class="reminder-panel">
@@ -100,7 +132,8 @@
       <div id="fleetList"></div>
     </div>
   </dialog>
-  <script src="/app.js" defer></script>
-  <script src="/cdv-week-view.js?v=20261103" defer></script>
+  <script src="/app.js?v=20261119-vr" defer></script>
+  <script src="/cdv-week-view.js?v=20261119-vr" defer></script>
+  <script src="/todo.js?v=20261119-prive" defer></script>
 </body>
 </html>

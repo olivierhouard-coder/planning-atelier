@@ -1,4 +1,5 @@
 
+import { deliverDueTasks } from './todo.js';
 import { buildPushPayload } from '@block65/webcrypto-web-push';
 
 const json = (data, status = 200) =>
@@ -182,7 +183,18 @@ async function recordDiagnostic(env, source, result) {
 
 async function executeReminders(env, source) {
   try {
-    const result = await deliverDueReminders(env);
+    const [reminders, tasks] = await Promise.allSettled([
+      deliverDueReminders(env),
+      deliverDueTasks(env)
+    ]);
+    if (reminders.status === 'rejected') throw reminders.reason;
+    const result = { ...reminders.value };
+    if (tasks.status === 'fulfilled') {
+      result.todo = tasks.value;
+    } else {
+      console.error('Erreur rappels tâches', tasks.reason);
+      result.todo = { error: 'Rappels de tâches indisponibles' };
+    }
 
     await recordDiagnostic(env, source, result);
 

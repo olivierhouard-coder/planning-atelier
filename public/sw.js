@@ -15,10 +15,10 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const target = event.notification.data?.url || '/';
-  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async list => {
     for (const client of list) {
       if ('focus' in client) {
-        if ('navigate' in client) client.navigate(target);
+        if ('navigate' in client) await client.navigate(target);
         return client.focus();
       }
     }

@@ -66,6 +66,7 @@ function render() {
       const note=document.createElement('span');note.textContent=s.notes||'Cliquer pour consulter ou modifier';
       name.style.display = 'block'; note.style.display = 'block'; note.style.marginTop = '8px'; note.style.whiteSpace = 'pre-wrap'; note.style.overflowWrap = 'anywhere'; ev.append(name,note);
       if(reminder){const bell=document.createElement('small');bell.textContent='🔔 Rappel pièces';ev.append(bell);}
+      if(s.replacement_forced_at){const warning=document.createElement('small');warning.textContent='⚠ VR forcé';ev.append(warning);}
       if(s.replacement_vehicle_id){const car=document.createElement('small');car.textContent='🚗 '+(s.replacement_vehicle_name||'VR');ev.append(car);}
       ev.addEventListener('click',()=>openEdit(s));cell.append(ev);
     }
@@ -75,6 +76,7 @@ function render() {
 function openNew(day=iso(new Date())) {
   form.reset(); $('slotId').value=''; $('reminderId').value=''; $('entryDate').value=day; $('returnDate').value='';
   $('formTitle').textContent='Nouveau rendez-vous'; $('deleteSlot').classList.add('hidden');
+  $('forceReplacement').checked=false;
   $('replacementVehicle').value=''; $('partsNeeded').value='no'; $('reminderAt').value=''; $('reminderMessage').value=''; $('reminderCompleted').checked=false;
   dialog.showModal();
 }
@@ -82,6 +84,7 @@ function openEdit(s) {
   const r = reminders.find(item => item.slot_id === s.id);
   $('slotId').value=s.id; $('entryDate').value=s.entry_date; $('returnDate').value=s.return_date || '';
   $('vehicleInfo').value=s.vehicle_info || ''; $('notes').value=s.notes || '';
+  $('forceReplacement').checked=Boolean(s.replacement_forced_at);
   $('replacementVehicle').value=s.replacement_vehicle_id==null?'':String(s.replacement_vehicle_id);
   $('reminderId').value=r?.id || '';
   $('partsNeeded').value=r ? 'yes' : 'no';
@@ -96,11 +99,13 @@ form.addEventListener('submit', async e => {
   const existingId=$('slotId').value;
   const payload={...(existingId?{id:existingId}:{}), entry_date:$('entryDate').value, return_date:$('returnDate').value || null,
     vehicle_info:$('vehicleInfo').value.trim() || null, notes:$('notes').value.trim() || null,
-    replacement_vehicle_id:$('replacementVehicle').value?Number($('replacementVehicle').value):null};
+    replacement_vehicle_id:$('replacementVehicle').value?Number($('replacementVehicle').value):null,
+    force_replacement:$('forceReplacement').checked};
   if(!payload.entry_date){alert('La date d’entrée est obligatoire.');return;}
   if(payload.replacement_vehicle_id&&!payload.return_date){alert('Pour réserver un VR, renseigne la date de restitution du client.');return;}
   const reminderAt=$('reminderAt').value;
   if ($('partsNeeded').value === 'yes' && !reminderAt) { alert('Choisis une date et une heure pour le rappel des pièces.'); return; }
+  if(payload.replacement_vehicle_id && payload.force_replacement && !confirm('Forcer l’affectation de ce VR du '+payload.entry_date+' au '+payload.return_date+' ? Cette affectation sera enregistrée même si un autre prêt existe ou si le retour réel n’est pas confirmé.')) return;
   try {
     const saved=await api('/api/slots', {method:existingId?'PUT':'POST', body:JSON.stringify(payload)});
     const id=saved.id;
@@ -151,6 +156,8 @@ function renderVRDashboard(){
   const detail=document.createElement('div');detail.className='vr-detail';
   const state=document.createElement('span');state.className=current?'vr-busy':'vr-free';state.textContent=current?(current.returned_at?'Restitué le '+current.actual_return_date+' · jour bloqué':current.return_date<date?'Retour en retard — à confirmer':'Prêt prévu jusqu’au '+current.return_date):'Disponible selon planning le '+date;
   detail.append(state);
+  const forced=slots.filter(s=>Number(s.replacement_vehicle_id)===Number(v.id)&&s.replacement_forced_at&&s.entry_date<=date&&(s.actual_return_date||s.return_date)>=date);
+  for(const booking of forced){const notice=document.createElement('span');notice.textContent='⚠ Affectation forcée · '+(booking.vehicle_info||'Client non renseigné');detail.append(notice);const openForced=document.createElement('button');openForced.type='button';openForced.textContent='Voir affectation forcée';openForced.addEventListener('click',()=>openEdit(booking));detail.append(openForced);}
   if(current){const who=document.createElement('span');who.textContent=current.vehicle_info||'Client non renseigné';detail.append(who);}
   else if(next){const upcoming=document.createElement('span');upcoming.textContent='Prochain départ : '+next.entry_date+(next.vehicle_info?' · '+next.vehicle_info:'');detail.append(upcoming);}
   line.append(name,detail);if(current){const open=document.createElement('button');open.type='button';open.textContent='Voir RDV';open.className='secondary-button';open.addEventListener('click',()=>openEdit(current));line.append(open);}

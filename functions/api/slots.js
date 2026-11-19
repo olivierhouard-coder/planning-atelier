@@ -32,8 +32,8 @@ async function vehicle(db, id) {
 
 function dbError(e) {
   const msg = String(e?.message || e);
-  if (/UNIQUE constraint failed: replacement_occupancy|replacement_occupancy.vehicle_id/i.test(msg)) {
-    return json({ error: 'Ce véhicule de remplacement est déjà réservé sur une ou plusieurs dates. Actualise le planning et choisis un autre VR.' }, 409);
+  if (/VR_FORCE_CONFLICT|UNIQUE constraint failed: replacement_occupancy|replacement_occupancy.vehicle_id/i.test(msg)) {
+    return json({ error: 'Ce véhicule de remplacement est déjà réservé sur une ou plusieurs dates. Choisis un autre VR ou coche « Forcer l’affectation du VR » pour confirmer une exception.' }, 409);
   }
   return json({ error: msg }, 500);
 }
@@ -56,7 +56,7 @@ async function unreturnedConflict(db, vehicleId, proposedReturn, excludedSlotId 
 }
 
 const unavailable = () => json({
-  error: 'Ce VR est associé à un prêt dont le retour réel n’a pas été confirmé. Confirme sa restitution avant de programmer un nouveau prêt.'
+  error: 'Ce VR est associé à un prêt dont le retour réel n’a pas été confirmé. Confirme sa restitution ou coche « Forcer l’affectation du VR » pour programmer une exception.'
 }, 409);
 
 export async function onRequestGet({ env }) {
@@ -65,10 +65,12 @@ export async function onRequestGet({ env }) {
     const { results = [] } = await env.DB.prepare(`
       SELECT s.id,s.entry_date,s.return_date,s.vehicle_info,s.notes,s.created_at,s.updated_at,
              s.actual_return_date,s.returned_at,
-             r.vehicle_id AS replacement_vehicle_id,v.name AS replacement_vehicle_name
+             r.vehicle_id AS replacement_vehicle_id,v.name AS replacement_vehicle_name,
+             o.forced_at AS replacement_forced_at
       FROM slots s
       LEFT JOIN replacement_reservations r ON r.slot_id=s.id
       LEFT JOIN replacement_vehicles v ON v.id=r.vehicle_id
+      LEFT JOIN replacement_overrides o ON o.slot_id=s.id
       ORDER BY s.entry_date,s.created_at
     `).all();
     return json(results);
@@ -80,6 +82,7 @@ export async function onRequestPost({ request, env }) {
   let b; try { b = await request.json(); } catch { return json({ error: 'JSON invalide' }, 400); }
   const err = validate(b); if (err) return json({ error: err }, 400);
   const id = crypto.randomUUID();
+  const force = b.force_replacement === true;
   const vr = b.replacement_vehicle_id == null || b.replacement_vehicle_id === '' ? null : Number(b.replacement_vehicle_id);
   if (vr !== null && (!Number.isSafeInteger(vr) || vr < 1)) return json({ error: 'VR invalide' }, 400);
   if (vr !== null && !b.return_date) return json({ error: 'Renseigne la date de restitution pour réserver un VR.' }, 400);
@@ -87,14 +90,16 @@ export async function onRequestPost({ request, env }) {
     if (vr !== null) {
       const v = await vehicle(env.DB, vr);
       if (!v || !v.active) return json({ error: 'VR inexistant ou désactivé' }, 400);
-      if (await unreturnedConflict(env.DB, vr, b.return_date)) return unavailable();
+      if (!force && await unreturnedConflict(env.DB, vr, b.return_date)) return unavailable();
     }
     const statements = [env.DB.prepare("INSERT INTO slots(id,entry_date,return_date,vehicle_info,notes,updated_at) VALUES(?,?,?,?,?,datetime('now'))")
       .bind(id, b.entry_date, b.return_date || null, b.vehicle_info || null, b.notes || null)];
     if (vr !== null) {
+      if (force) statements.push(env.DB.prepare('INSERT INTO replacement_overrides(slot_id,forced_at) VALUES(?,?)').bind(id, new Date().toISOString()));
       statements.push(env.DB.prepare('INSERT INTO replacement_reservations(vehicle_id,slot_id) VALUES(?,?)').bind(vr, id));
       for (const day of dates(b.entry_date, b.return_date)) {
-        statements.push(env.DB.prepare('INSERT INTO replacement_occupancy(vehicle_id,day,slot_id) VALUES(?,?,?)').bind(vr, day, id));
+        const table = force ? 'replacement_forced_occupancy' : 'replacement_occupancy';
+        statements.push(env.DB.prepare(`INSERT INTO ${table}(vehicle_id,day,slot_id) VALUES(?,?,?)`).bind(vr, day, id));
       }
     }
     await env.DB.batch(statements);
@@ -107,6 +112,7 @@ export async function onRequestPut({ request, env }) {
   let b; try { b = await request.json(); } catch { return json({ error: 'JSON invalide' }, 400); }
   if (!b?.id || typeof b.id !== 'string') return json({ error: 'Identifiant du rendez-vous manquant' }, 400);
   const err = validate(b); if (err) return json({ error: err }, 400);
+  const force = b.force_replacement === true;
   try {
     const current = await env.DB.prepare(`
       SELECT s.id,s.entry_date,s.return_date,s.returned_at,r.vehicle_id
@@ -123,19 +129,25 @@ export async function onRequestPut({ request, env }) {
     if (vr !== null) {
       const v = await vehicle(env.DB, vr);
       if (!v || (!v.active && vr !== current.vehicle_id)) return json({ error: 'VR inexistant ou désactivé' }, 400);
-      if (!current.returned_at && await unreturnedConflict(env.DB, vr, b.return_date, b.id)) return unavailable();
+      if (!force && !current.returned_at && await unreturnedConflict(env.DB, vr, b.return_date, b.id)) return unavailable();
     }
     const statements = [
-      ...(current.returned_at ? [] : [env.DB.prepare('DELETE FROM replacement_occupancy WHERE slot_id=?').bind(b.id)]),
+      ...(current.returned_at ? [] : [
+        env.DB.prepare('DELETE FROM replacement_occupancy WHERE slot_id=?').bind(b.id),
+        env.DB.prepare('DELETE FROM replacement_forced_occupancy WHERE slot_id=?').bind(b.id),
+        env.DB.prepare('DELETE FROM replacement_overrides WHERE slot_id=?').bind(b.id)
+      ]),
       env.DB.prepare("UPDATE slots SET entry_date=?,return_date=?,vehicle_info=?,notes=?,updated_at=datetime('now') WHERE id=?")
         .bind(b.entry_date, b.return_date || null, b.vehicle_info || null, b.notes || null, b.id)
     ];
     if (vr === null) {
       statements.push(env.DB.prepare('DELETE FROM replacement_reservations WHERE slot_id=?').bind(b.id));
     } else if (!current.returned_at) {
+      if (force) statements.push(env.DB.prepare('INSERT INTO replacement_overrides(slot_id,forced_at) VALUES(?,?)').bind(b.id, new Date().toISOString()));
       statements.push(env.DB.prepare('INSERT INTO replacement_reservations(vehicle_id,slot_id) VALUES(?,?) ON CONFLICT(slot_id) DO UPDATE SET vehicle_id=excluded.vehicle_id').bind(vr, b.id));
       for (const day of dates(b.entry_date, b.return_date)) {
-        statements.push(env.DB.prepare('INSERT INTO replacement_occupancy(vehicle_id,day,slot_id) VALUES(?,?,?)').bind(vr, day, b.id));
+        const table = force ? 'replacement_forced_occupancy' : 'replacement_occupancy';
+        statements.push(env.DB.prepare(`INSERT INTO ${table}(vehicle_id,day,slot_id) VALUES(?,?,?)`).bind(vr, day, b.id));
       }
     }
     await env.DB.batch(statements);
@@ -152,6 +164,8 @@ export async function onRequestDelete({ request, env }) {
     if (!found) return json({ error: 'Rendez-vous introuvable' }, 404);
     await env.DB.batch([
       env.DB.prepare('DELETE FROM replacement_occupancy WHERE slot_id=?').bind(id),
+      env.DB.prepare('DELETE FROM replacement_forced_occupancy WHERE slot_id=?').bind(id),
+      env.DB.prepare('DELETE FROM replacement_overrides WHERE slot_id=?').bind(id),
       env.DB.prepare('DELETE FROM replacement_reservations WHERE slot_id=?').bind(id),
       env.DB.prepare('DELETE FROM slots WHERE id=?').bind(id)
     ]);

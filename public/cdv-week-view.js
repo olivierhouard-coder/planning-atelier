@@ -33,6 +33,7 @@
     const name=document.createElement('strong');name.textContent=s.vehicle_info||'Client / véhicule à renseigner';
     const note=document.createElement('span');note.className='cdv-slot-note';note.textContent=s.notes||'Aucun commentaire';
     content.append(name,note);
+    if(s.replacement_forced_at){const warning=document.createElement('small');warning.textContent='⚠ VR forcé';content.append(warning);}
     const reminder=reminders.find(r=>r.slot_id===s.id&&!r.completed_at);
     if(reminder||s.replacement_vehicle_id){const tags=document.createElement('span');tags.className='cdv-slot-tags';if(reminder){const t=document.createElement('small');t.textContent='Rappel pièces';tags.append(t);}if(s.replacement_vehicle_id){const t=document.createElement('small');t.textContent='VR · '+(s.replacement_vehicle_name||'Réservé');tags.append(t);}content.append(tags);}
     ev.setAttribute('aria-label',(s.vehicle_info||'Véhicule')+' · '+type+' · '+(s.notes||'Aucun commentaire'));ev.title=s.notes||'Ouvrir le dossier';ev.append(marker,content);ev.addEventListener('click',()=>openEdit(s));return ev;

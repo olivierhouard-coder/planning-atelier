@@ -1,0 +1,45 @@
+.todo-nav {
+  display: flex;
+  gap: 4px;
+}
+.todo-nav a {
+  color: #334155;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: .8rem;
+  text-decoration: none;
+}
+.todo-nav a[aria-current="page"] {
+  color: white;
+  background: #a92538;
+}
+body.todo-active { overflow: auto; }
+body.todo-active .header-actions { display: none; }
+#todoView { max-width: 640px; padding: 12px; }
+#todoView[hidden], #planningView[hidden], #todoDone[hidden] { display: none; }
+#todoForm { display: grid; gap: 8px; }
+#todoForm textarea, #todoForm input { width: 100%; }
+.todo-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#todoStatus { min-height: 1.25em; }
+#todoList, #todoDoneList { padding: 0; list-style: none; }
+#todoView li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  margin: 6px 0;
+  background: white;
+  border: 1px solid #dfe4ec;
+  border-radius: 7px;
+  overflow-wrap: anywhere;
+}
+#todoView li small { display: block; margin-top: 4px; color: #526174; }
+#todoView li button { flex-shrink: 0; }
+@media (max-width: 650px) {
+  body > header:has(.todo-nav) { flex-wrap: wrap; }
+}
+
+#todoLoginForm { display: grid; gap: 8px; max-width: 420px; }
+#todoLoginForm[hidden], #todoContent[hidden] { display: none; }
+#todoLogout { margin-bottom: 12px; background: #edf1f5; color: #334155; }

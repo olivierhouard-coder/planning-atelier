@@ -12,7 +12,8 @@ export async function onRequestPost({request,env}){
   if(loan.entry_date>today)return json({error:'Le prêt ne commence que le '+loan.entry_date},409);
   const statements=[
    env.DB.prepare("UPDATE slots SET actual_return_date=?,returned_at=datetime('now'),updated_at=datetime('now') WHERE id=? AND returned_at IS NULL").bind(today,loan.id),
-   env.DB.prepare('DELETE FROM replacement_occupancy WHERE slot_id=? AND day>?').bind(loan.id,today)
+   env.DB.prepare('DELETE FROM replacement_occupancy WHERE slot_id=? AND day>?').bind(loan.id,today),
+   env.DB.prepare('DELETE FROM replacement_forced_occupancy WHERE slot_id=? AND day>?').bind(loan.id,today)
   ];
   await env.DB.batch(statements);
   return json({ok:true,actual_return_date:today});
